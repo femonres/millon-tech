@@ -9,6 +9,8 @@ kind: Service
 metadata:
   name: python-app-svc
   namespace: tech-prod
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
   selector:
     app: python-app
@@ -65,3 +67,33 @@ spec:
                     values:
                       - python-app
               topologyKey: "kubernetes.io/hostname"
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-internal-prod
+  namespace: tech-prod
+spec:
+  podSelector:
+    matchLabels:
+      app: python-app
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: tech-prod
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: tech-prod
+    ports:
+    - protocol: TCP
+      port: 8080
