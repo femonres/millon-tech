@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tech-prod
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: python-app-svc
+  namespace: tech-prod
+spec:
+  selector:
+    app: python-app
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-app-dp
+  namespace: tech-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: python-app
+  template:
+    metadata:
+      labels:
+        app: python-app
+    spec:
+      containers:
+        - name: python-app
+          image: docker.io/million/python-app:latest
+          resources:
+            limits:
+              memory: "3Gi"
+            requests:
+              memory: "2Gi"
+          ports:
+            - containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+        - key: "key"
+          operator: "Equal"
+          value: "value"
+          effect: "NoSchedule"
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - python-app
+              topologyKey: "kubernetes.io/hostname"
