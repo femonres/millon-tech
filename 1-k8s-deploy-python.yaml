@@ -25,6 +25,8 @@ kind: Deployment
 metadata:
   name: python-app-dp
   namespace: tech-prod
+  annotations:
+    linkerd.io/inject: enabled
 spec:
   replicas: 1
   selector:
@@ -34,6 +36,8 @@ spec:
     metadata:
       labels:
         app: python-app
+      annotations:
+        linkerd.io/inject: enabled
     spec:
       containers:
         - name: python-app
