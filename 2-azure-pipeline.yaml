@@ -1,0 +1,41 @@
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x'
+      addToPath: true
+
+  - script: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+    displayName: 'Instalar dependencias'
+
+  - script: |
+      python -m unittest discover -s tests
+    displayName: 'Ejecutando pruebas unitarias'
+
+  - task: CopyFiles@2
+    inputs:
+      contents: '**'
+      targetFolder: '$(Build.ArtifactStagingDirectory)'
+    displayName: 'Copiando archivos para crear el Artifact'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: 'drop'
+      publishLocation: 'Container'
+    displayName: 'Publicando el Artifact'
+    
+  # Add Docker build step
+  - task: Docker@2
+    inputs:
+      containerRegistry: 'docker.io'
+      repository: 'millon/python-app'
+      command: 'buildAndPush'
+      Dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
+      tags: |
+        $(Build.BuildId)
+    displayName: 'Publicando imagen de Docker en el Registry'
